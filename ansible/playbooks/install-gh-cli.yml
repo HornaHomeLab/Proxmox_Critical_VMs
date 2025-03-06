@@ -1,0 +1,15 @@
+---
+- name: Install GitHub cli
+  hosts: all
+
+  tasks:
+  - name: Install git
+    become: true
+    ansible.builtin.apt:
+      name: git-all
+      state: present
+
+  - community.general.homebrew:
+      name: gh
+      state: present
+      update_homebrew: true

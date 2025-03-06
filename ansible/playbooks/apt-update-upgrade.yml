@@ -1,0 +1,36 @@
+---
+- name: Attempt updates, reboot on failure, and retry updates
+  hosts: all
+  become: true  
+  tasks:
+    - name: Update apt cache (first attempt)
+      apt:
+        update_cache: yes
+      register: update_result
+      ignore_errors: true  
+
+    - name: Upgrade all packages (first attempt)
+      apt:
+        upgrade: dist
+      register: upgrade_result
+      ignore_errors: true  
+
+    # Reboot if either update or upgrade failed
+    - name: Reboot host if update or upgrade failed
+      when: update_result is failed or upgrade_result is failed
+      ansible.builtin.reboot:
+        reboot_timeout: 600  # Wait up to 10 minutes for the host to come back
+      register: reboot_result
+
+    # Retry updates after reboot
+    - name: Update apt cache (retry after reboot)
+      when: reboot_result is changed
+      apt:
+        update_cache: yes
+      register: retry_update_result
+
+    - name: Upgrade all packages (retry after reboot)
+      when: reboot_result is changed
+      apt:
+        upgrade: dist
+      register: retry_upgrade_result

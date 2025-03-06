@@ -1,0 +1,51 @@
+---
+- name: Install homebrew
+  hosts: all
+  
+  tasks:
+    - name: Check if Homebrew is installed
+      stat:
+        path: /home/linuxbrew/.linuxbrew/bin/brew
+      register: brew_stat
+
+    - name: Install brew dependencies
+      become: true
+      apt:
+        name:
+          - build-essential
+        state: latest
+        update_cache: true
+      when: not brew_stat.stat.exists
+
+    - name: Install brew
+      shell: curl -fsSL  https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | bash
+      when: not brew_stat.stat.exists
+      args:
+        creates: /home/linuxbrew/.linuxbrew/bin/brew
+
+    - name: Recursively change ownership of a directory
+      become: true
+      ansible.builtin.file:
+        path: /home/linuxbrew/
+        state: directory
+        recurse: yes
+        mode: '0777'
+
+    - name: Find user .bashrc files
+      become: true
+      find:
+        paths: /home/
+        patterns: ".bashrc"
+        file_type: file
+        recurse: yes
+        hidden: yes
+      register: files_to_update
+
+    - name: Add brew to the PATH
+      become: true
+      lineinfile:
+        path: "{{ item.path }}"
+        state: present
+        line: 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"'
+        create: yes  # Create file if it doesn't exist
+      loop: "{{ files_to_update.files }}"

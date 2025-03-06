@@ -1,0 +1,25 @@
+---
+- name: Disable swap on Ubuntu server
+  hosts: all
+  become: true
+  tasks:
+    - name: Turn off all swap devices
+      ansible.builtin.command: /sbin/swapoff -a
+      when: ansible_swaptotal_mb > 0
+
+    - name: Remove swap entry from /etc/fstab
+      ansible.builtin.replace:
+        path: /etc/fstab
+        regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+        replace: '# \1'
+        backup: yes
+
+    - name: Ensure swap is disabled in /etc/sysctl.conf
+      ansible.builtin.lineinfile:
+        path: /etc/sysctl.conf
+        regexp: '^vm\.swappiness='
+        line: 'vm.swappiness=0'
+        state: present
+
+    - name: Apply sysctl settings
+      ansible.builtin.command: /sbin/sysctl -p

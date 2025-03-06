@@ -1,0 +1,45 @@
+---
+- name: Install PowerShell
+  hosts: all
+  become: true
+  
+  tasks:
+    - name: Update package list
+      apt:
+        update_cache: yes
+
+    - name: Install prerequisite packages
+      apt:
+        name:
+          - wget
+          - apt-transport-https
+          - software-properties-common
+        state: present
+
+    - name: Get Ubuntu version
+      command: bash -c 'source /etc/os-release && echo $VERSION_ID'
+      register: ubuntu_version
+      changed_when: false
+
+    - name: Download Microsoft repository keys
+      get_url:
+        url: "https://packages.microsoft.com/config/ubuntu/{{ ubuntu_version.stdout }}/packages-microsoft-prod.deb"
+        dest: "/tmp/packages-microsoft-prod.deb"
+
+    - name: Register Microsoft repository keys
+      apt:
+        deb: "/tmp/packages-microsoft-prod.deb"
+
+    - name: Remove Microsoft repository keys file
+      file:
+        path: "/tmp/packages-microsoft-prod.deb"
+        state: absent
+
+    - name: Update package list after adding Microsoft repository
+      apt:
+        update_cache: yes
+
+    - name: Install PowerShell
+      apt:
+        name: powershell
+        state: present

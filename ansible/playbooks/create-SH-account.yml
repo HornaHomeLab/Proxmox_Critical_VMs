@@ -1,0 +1,35 @@
+---
+- name: Create a SH user
+  hosts: all
+  become: true
+  
+  vars:
+    username: stanislawhorna
+  
+  tasks:
+    - name: Create a new user
+      user:
+        name: "{{ username }}"
+        password: "{{ lookup('ansible.builtin.file', './../../secrets/sh_password.txt') | password_hash('sha512') }}"
+        shell: /bin/bash
+        state: present
+
+    - name: Add user to sudo group
+      user:
+        name: "{{ username }}"
+        groups: sudo  
+        append: yes
+
+    - name: Allow passwordless sudo
+      lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: '^"{{ username }}"'
+        line: '"{{ username }}" ALL=(ALL) NOPASSWD:ALL'
+        validate: '/usr/sbin/visudo -cf %s'
+
+    - name: Set authorized key for SSH
+      ansible.posix.authorized_key:
+        user: "{{ username }}"
+        state: present
+        key: "{{ lookup('ansible.builtin.url', 'https://github.com/StanislawHornaGitHub.keys', split_lines=False) }}"

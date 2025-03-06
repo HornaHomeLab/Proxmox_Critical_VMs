@@ -1,0 +1,22 @@
+- hosts: all
+
+- name: Update apt 
+  ansible.builtin.import_playbook: ./playbooks/apt-update-upgrade.yml
+
+- name: Create a SH user
+  ansible.builtin.import_playbook: ./playbooks/create-SH-account.yml
+
+- name: Install Docker Engine
+  ansible.builtin.import_playbook: ./playbooks/install-docker.yml
+
+- name: Install Homebrew
+  ansible.builtin.import_playbook: ./playbooks/install-brew.yml
+
+- name: Install PowerShell
+  ansible.builtin.import_playbook: ./playbooks/install-pwsh.yml
+
+- name: Install GitHub CLI
+  ansible.builtin.import_playbook: ./playbooks/install-gh-cli.yml
+
+- name: Install Oh-My-Posh
+  ansible.builtin.import_playbook: ./playbooks/install-oh-my-posh.yml

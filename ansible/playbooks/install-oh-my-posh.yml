@@ -1,0 +1,62 @@
+---
+- name: Install Oh-My-Posh
+  hosts: all
+
+  vars:
+    oh_my_posh_dir: /usr/share/oh-my-posh
+    oh_my_posh_theme_gist_url: https://gist.githubusercontent.com/StanislawHornaGitHub/9a8e8c01c45f2fe59eb1bbfc846e8d63/raw/0824a12cebd4f959f80e75ebb70e90b9883fb2ab/plain.SH.json
+
+  tasks:
+    
+    - name: Check if Homebrew is installed
+      stat:
+        path: "{{ oh_my_posh_dir }}"
+      register: oh_my_posh_stat
+
+    - name: Install Oh-My-Posh dependencies
+      become: true
+      apt:
+        name:
+          - unzip
+        state: latest
+        update_cache: true
+      when: not oh_my_posh_stat.stat.exists
+
+    - name: Create directory for Oh-My-Posh
+      become: true
+      ansible.builtin.file:
+        path: "{{ oh_my_posh_dir }}"
+        state: directory
+        mode: '0777'
+      when: not oh_my_posh_stat.stat.exists
+
+    - name: Install Oh-My-Posh
+      shell: curl -s https://ohmyposh.dev/install.sh | bash -s -- -d "{{ oh_my_posh_dir }}"
+      when: not oh_my_posh_stat.stat.exists
+
+    - name: Find user .bashrc files
+      become: true
+      find:
+        paths: /home/
+        patterns: ".bashrc"
+        file_type: file
+        recurse: yes
+        hidden: yes
+      register: files_to_update
+
+    - name: Configure Oh-My-Posh
+      become: true
+      lineinfile:
+        path: "{{ item.path }}"
+        state: present
+        line: 'eval "$({{ oh_my_posh_dir }}/oh-my-posh init bash --config {{ oh_my_posh_theme_gist_url }})"'
+        create: yes  # Create file if it doesn't exist
+      loop: "{{ files_to_update.files }}"
+
+    - name: Update permissions
+      become: true
+      ansible.builtin.file:
+        path: "{{ oh_my_posh_dir }}"
+        state: directory
+        mode: '0777'
+        recurse: yes
