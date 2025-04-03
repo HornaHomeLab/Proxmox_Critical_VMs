@@ -1,11 +1,11 @@
-variable "proxmox_api_url" {
-  type = string
+variable "vault_role_id" {
+  type        = string
+  description = "Vault AppRole Role ID"
+  sensitive   = true
 }
 
-variable "proxmox_api_token_id" {
-  type = string
-}
-
-variable "proxmox_api_token_secret" {
-  type = string
+variable "vault_secret_id" {
+  type        = string
+  description = "Vault AppRole Secret ID"
+  sensitive   = true
 }
