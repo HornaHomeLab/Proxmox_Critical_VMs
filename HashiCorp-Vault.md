@@ -20,7 +20,7 @@ vault write -f auth/approle/role/<my-approle-name>/secret-id
 
 4. To be able to use **vault** provider in `.tf` file, access policy needs following lines:
 
-```
+```HCL
 path "auth/token/create" {
   capabilities = ["create", "update"]
 }
